@@ -7,24 +7,31 @@ using Services;
 
 namespace Controllers
 {
-    [ApiVersion("1")]
+    [ApiVersion("2")]
     [Route("api/v{version:apiVersion}/PizzaOrder")]
     [ApiController]
-    public class PizzaOrderControllerV1 : ControllerBase
+    public class PizzaOrderControllerV2 : ControllerBase
     {
         private readonly IPizzaOrderService _pizzaOrderService;
-        public PizzaOrderControllerV1(IPizzaOrderService pizzaOrderService)
+        public PizzaOrderControllerV2(IPizzaOrderService pizzaOrderService)
         {
             _pizzaOrderService = pizzaOrderService;
         }
 
         [HttpPost]
-        public IActionResult CreatePizzaOrder([FromBody] PizzaOrderV1 order)
+        public IActionResult CreatePizzaOrder([FromBody] PizzaOrderV2 order)
         {
+            if (Enum.TryParse(order.Crust, out Crust crustSelected) == false)
+            {
+                return BadRequest("Invalid Crust, must be one of: " + EnumHelper.ToStringList(typeof(Crust)));
+            }
+
             string id = _pizzaOrderService.CreatePizzaOrder(
-                new Models.Private.PizzaOrder(order.Cheese,
+                new PizzaOrder(order.Cheese,
                  order.Pepperoni,
-                  order.TomatoSauce));
+                  order.TomatoSauce,
+                  crustSelected));
+
             return StatusCode((int)HttpStatusCode.Created, id);
         }
 
@@ -36,7 +43,7 @@ namespace Controllers
             {
                 return NotFound();
             }
-            return Ok(returnedValue.ToPublicV1());
+            return Ok(returnedValue.ToPublicV2());
         }
     }
 }
