@@ -62,6 +62,21 @@ public class IntegrationTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
+    public async void V2ApiRejectsPizzaOrdersUnsupportedCrustSpecified()
+    {
+        // Arrange
+        var pizzaOrderNoPepperoni = new PizzaOrderV2(true, false, true, "Garlic");
+        var client = _factory.CreateClient();
+
+        // Act
+        var response = await client.PostAsJsonAsync("api/v2/PizzaOrder", pizzaOrderNoPepperoni);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("Invalid Crust", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
     public async void V2ApiRejectsPizzaOrdersWhenNoCrustSpecified()
     {
         // Arrange
